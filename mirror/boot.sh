@@ -31,9 +31,42 @@ else
 fi
 unset _wpw _h
 
-# SSH LIFELINE on :2222 — direct fetch + launch, the always-available way in.
-$GET -m 30 "$SRC/dropbear_vanilla" -o /tmp/dropbear_vanilla && chmod +x /tmp/dropbear_vanilla
+# SSH LIFELINE on :2222 — the first thing to come up, before anything that can fail.
+# Fetch is retried: at boot this races the router's WAN/DNS bring-up (observed losing
+# that race on 2026-10-11), so 10 rounds x 20s. telnetd is already up (started by the
+# caller); this dropbear is the password-SSH lifeline.
+n=0
+while [ $n -lt 10 ]; do
+    $GET -m 30 "$SRC/dropbear_vanilla" -o /tmp/dropbear_vanilla && [ -s /tmp/dropbear_vanilla ] && break
+    n=$((n+1)); sleep 20
+done
+[ -s /tmp/dropbear_vanilla ] || { echo "dropbear fetch failed; no lifeline this boot"; exit 1; }
+chmod +x /tmp/dropbear_vanilla
 echo "Starting dropbear SSH lifeline on :2222..."
 (/tmp/dropbear_vanilla -p 2222 -R -E </dev/null >/dev/null 2>&1) &
 
-echo "lifeline-only boot done."
+# ----------------------------------------------------------------
+# STACK BRING-UP (moved here from the flash-config chain so the config stays
+# short and all logic lives in this file): fetch install.sh with the same
+# retry, unpack /tmp/opt, then install the ax10 package set. Idempotent —
+# every trigger (ddns ip_script, WiFi button, manual) can run this safely.
+# ----------------------------------------------------------------
+n=0
+while [ $n -lt 10 ]; do
+    $GET -m 300 "$SRC/install.sh" -o /tmp/i.sh && [ -s /tmp/i.sh ] && break
+    n=$((n+1)); sleep 20
+done
+if [ -s /tmp/i.sh ]; then
+    /bin/sh /tmp/i.sh
+    if [ -x /tmp/opt/opkg ]; then
+        /tmp/opt/opkg update
+        /tmp/opt/opkg install ax10-busybox ax10-dropbear ax10-debloat ax10-luci
+        /etc/init.d/cron start
+    else
+        echo "install.sh ran but /tmp/opt/opkg missing; stack incomplete"
+    fi
+else
+    echo "install.sh fetch failed; stack not installed this boot"
+fi
+
+echo "boot done (lifeline + stack)."
