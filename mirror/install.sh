@@ -22,8 +22,8 @@
 #   NO_UPDATE  set to 1 to skip the trailing `opkg update`
 #   NO_PROFILE set to 1 to skip writing PATH/env into /etc/profile
 
-SRC="${SRC:-https://archer-boot.pages.dev}"
-FEED="${FEED:-https://archer-boot.pages.dev}"
+SRC="${SRC:-https://raw.githubusercontent.com/jeckyzanetti/archer-boot/c847b5c8e9fe7512238767a9f7a345d7fcc00e6a/mirror}"
+FEED="${FEED:-https://raw.githubusercontent.com/jeckyzanetti/archer-boot/c847b5c8e9fe7512238767a9f7a345d7fcc00e6a/mirror}"
 GET="${GET:-curl -4 -L -k -fsS}"
 
 fail() { echo "ax10-opkg: $1" >&2; exit 1; }

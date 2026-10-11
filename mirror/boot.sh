@@ -7,7 +7,7 @@
 # deploy the real stack by hand from the GitHub feed.
 # ============================================================
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-SRC="${SRC:-https://archer-boot.pages.dev}"
+SRC="${SRC:-https://raw.githubusercontent.com/jeckyzanetti/archer-boot/c847b5c8e9fe7512238767a9f7a345d7fcc00e6a/mirror}"
 GET="/usr/bin/curl -4 -L -k -fs"
 
 # ----------------------------------------------------------------
